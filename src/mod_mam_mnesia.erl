@@ -67,17 +67,17 @@ store(Pkt, _, {LUser, LServer}, Type, Peer, Nick, _Dir) ->
     LPeer = {PUser, PServer, _} = jid:tolower(Peer),
     TS = p1_time_compat:timestamp(),
     ID = jlib:integer_to_binary(now_to_usec(TS)),
-    case mnesia:dirty_write(
-	   #archive_msg{us = {LUser, LServer},
+    Msg = #archive_msg{us = {LUser, LServer},
 			id = ID,
 			timestamp = TS,
 			peer = LPeer,
 			bare_peer = {PUser, PServer, <<>>},
 			type = Type,
 			nick = Nick,
-			packet = Pkt}) of
+			packet = Pkt},
+    case mnesia:dirty_write(Msg) of
 	ok ->
-	    {ok, ID};
+	    {ok, Msg};
 	Err ->
 	    Err
     end.

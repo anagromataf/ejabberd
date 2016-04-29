@@ -83,7 +83,16 @@ store(Pkt, LServer, {LUser, LHost}, Type, Peer, Nick, _Dir) ->
 		"%(SType)s, "
 		"%(Nick)s)")) of
 	{updated, _} ->
-	    {ok, ID};
+        LPeer = {PUser, PServer, _} = jid:tolower(Peer),
+        Msg = #archive_msg{us = {LUser, LServer},
+			id = ID,
+			timestamp = TS,
+			peer = LPeer,
+			bare_peer = {PUser, PServer, <<>>},
+			type = Type,
+			nick = Nick,
+			packet = Pkt},
+	    {ok, Msg};
 	Err ->
 	    Err
     end.

@@ -56,7 +56,7 @@
 			      all | chat | groupchat) -> any().
 -callback extended_fields() -> [xmlel()].
 -callback store(xmlel(), binary(), {binary(), binary()}, chat | groupchat,
-		jid(), binary(), recv | send) -> {ok, binary()} | any().
+		jid(), binary(), recv | send) -> {ok, #archive_msg{}} | any().
 -callback write_prefs(binary(), binary(), #archive_prefs{}, binary()) -> ok | any().
 -callback get_prefs(binary(), binary()) -> {ok, #archive_prefs{}} | error.
 -callback select(binary(), jid(), jid(),
@@ -185,11 +185,12 @@ user_receive_packet(Pkt, C2SState, JID, Peer, To) ->
 	true when not IsBareCopy ->
 	    NewPkt = strip_my_archived_tag(Pkt, LServer),
 	    case store_msg(C2SState, NewPkt, LUser, LServer, Peer, recv) of
-		{ok, ID} ->
+		{ok, #archive_msg{id=ID, timestamp=TS}} ->
 		    Archived = #xmlel{name = <<"archived">>,
 				      attrs = [{<<"by">>, LServer},
 					       {<<"xmlns">>, ?NS_MAM_TMP},
-					       {<<"id">>, ID}]},
+					       {<<"id">>, ID},
+                           {<<"stamp">>, jlib:now_to_utc_string(TS)}]},
 		    StanzaID = #xmlel{name = <<"stanza-id">>,
 				      attrs = [{<<"by">>, LServer},
 					       {<<"xmlns">>, ?NS_SID_0},
@@ -211,11 +212,12 @@ user_send_packet(Pkt, C2SState, JID, Peer) ->
 	    NewPkt = strip_my_archived_tag(Pkt, LServer),
 	    case store_msg(C2SState, jlib:replace_from_to(JID, Peer, NewPkt),
 		      LUser, LServer, Peer, send) of
-              {ok, ID} ->
+              {ok, #archive_msg{id=ID, timestamp=TS}} ->
       		    Archived = #xmlel{name = <<"archived">>,
       				      attrs = [{<<"by">>, LServer},
       					       {<<"xmlns">>, ?NS_MAM_TMP},
-      					       {<<"id">>, ID}]},
+      					       {<<"id">>, ID},
+                               {<<"stamp">>, jlib:now_to_utc_string(TS)}]},
       		    StanzaID = #xmlel{name = <<"stanza-id">>,
       				      attrs = [{<<"by">>, LServer},
       					       {<<"xmlns">>, ?NS_SID_0},
